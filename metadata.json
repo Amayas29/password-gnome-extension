@@ -1,0 +1,9 @@
+{
+  "name": "Password Manager",
+  "description": "A gnome extension to manage your passwords",
+  "uuid": "passwordmanager@Amayas29.github.com",
+  "shell-version": [
+    "3.36"
+  ],
+  "version": "1.0"
+}

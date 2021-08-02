@@ -1,0 +1,20 @@
+.item-input {
+    width: 300px;
+    height: 20px;
+    background-color: rgb(245, 234, 215);
+    color: black;
+    font-size: 1.2em;
+}
+
+.button:hover {
+    color: wheat;
+}
+
+.button:active {
+    color: rgb(247, 196, 101);
+}
+
+.label {
+    color: white;
+    margin-left: 10px;
+}
