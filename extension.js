@@ -29,14 +29,30 @@ const PanelMenu = imports.ui.panelMenu;
 
 const Me = ExtensionUtils.getCurrentExtension();
 const MenuItem = Me.imports.menuItem.MenuItem;
+const cipher = Me.imports.encrypt.cipher;
+const decipher = Me.imports.encrypt.decipher;
+const Password = Me.imports.passwords.Password;
 
+let enc = cipher("qwdbNID])]l4BnU8t1j9pPNo!(JHwjCB");
+let dec = decipher("qwdbNID])]l4BnU8t1j9pPNo!(JHwjCB");
 let menu;
 let backButton = MenuItem.getButtonItem(_("Back"), "button", null);
 
-let saveItems, getItems;
+let saveItems, getItems, generateItems;
+const LENGTH = 32;
+const dataLowerCase = "azertyuiopqsdfghjklmwxcvbn";
+const dataUpperCase = dataLowerCase.toUpperCase();
+const dataNumbers = "0123456789";
+const dataOthers = "!?@$)([]";
+
+let data = [];
+
+data.push(...dataLowerCase);
+data.push(...dataUpperCase);
+data.push(...dataNumbers);
+data.push(...dataOthers);
 
 let back = () => {
-  log("back");
   menu.removeAll();
 
   backButton = MenuItem.getButtonItem(_("Back"), "button", null);
@@ -46,17 +62,50 @@ let back = () => {
 };
 
 let save = () => {
-  log("save");
-
   let service = saveItems.serviceItem.items[0].get_text();
   let username = saveItems.usernameItem.items[0].get_text();
   let password = saveItems.passwordItem.items[0].get_text();
+
+  if (service === "" || username === "" || password === "") return;
+
+  let pass = new Password(service, username, enc(password));
+  Password.addPassword(pass);
+  Password.write();
 };
 
 let get = () => {
-  log("get");
-
   let service = getItems.serviceItem.items[0].get_text();
+
+  let password = Password.getPassword(service);
+
+  let userLabel = getItems.usernameItem.items[0];
+  userLabel.visible = false;
+  let user = getItems.usernameItem.items[1];
+  user.visible = false;
+
+  let passLabel = getItems.passwordItem.items[0];
+  passLabel.visible = false;
+  let pass = getItems.passwordItem.items[1];
+  pass.visible = false;
+
+  if (password === null) return;
+
+  userLabel.visible = true;
+  user.visible = true;
+  user.set_text(password.username);
+
+  passLabel.visible = true;
+  pass.visible = true;
+  pass.set_text(dec(password.password));
+};
+
+let generate = () => {
+  let password = "";
+
+  for (let i = 0; i < LENGTH; i++)
+    password += data[Math.floor(Math.random() * data.length)];
+
+  generateItems.serviceItem.items[0].set_text(password);
 };
 
 let buildMenu = (fct_items) => {
@@ -99,6 +148,24 @@ const saveMenuItems = () => {
 };
 
 const getMenuItems = () => {
+  let passLabel = MenuItem.getLabel("label", _("Password"));
+  passLabel.visible = false;
+  let pass = MenuItem.getEntryItem(
+    "passwordEntry",
+    _("The password"),
+    "item-input"
+  );
+  pass.visible = false;
+
+  let userLabel = MenuItem.getLabel("label", _("Username"));
+  userLabel.visible = false;
+  let user = MenuItem.getEntryItem(
+    "userEntry",
+    _("The username"),
+    "item-input"
+  );
+  user.visible = false;
+
   getItems = {
     serviceItem: new MenuItem([
       MenuItem.getEntryItem(
@@ -107,6 +174,9 @@ const getMenuItems = () => {
         "item-input"
       ),
     ]),
+
+    usernameItem: new MenuItem([userLabel, user]),
+    passwordItem: new MenuItem([passLabel, pass]),
 
     buttons: new MenuItem([
       backButton,
@@ -128,8 +198,31 @@ const initialMenuItems = () => {
         menu.removeAll();
         saveMenu();
       }),
+      MenuItem.getButtonItem(_("Generate"), "button", () => {
+        menu.removeAll();
+        generateMenu();
+      }),
     ]),
   };
+};
+
+const generateMenuItems = () => {
+  generateItems = {
+    serviceItem: new MenuItem([
+      MenuItem.getEntryItem(
+        "passwordGenEntry",
+        _("generated password"),
+        "item-input"
+      ),
+    ]),
+
+    buttons: new MenuItem([
+      backButton,
+      MenuItem.getButtonItem(_("Generate"), "button", generate),
+    ]),
+  };
+
+  return generateItems;
 };
 
 let initialMenu = () => {
@@ -142,6 +235,10 @@ let saveMenu = () => {
 
 let getMenu = () => {
   buildMenu(getMenuItems);
+};
+
+let generateMenu = () => {
+  buildMenu(generateMenuItems);
 };
 
 const Indicator = GObject.registerClass(
@@ -187,5 +284,6 @@ class Extension {
 }
 
 function init(meta) {
+  Password.load();
   return new Extension(meta.uuid);
 }

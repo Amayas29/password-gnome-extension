@@ -49,9 +49,10 @@ class MenuItem {
     });
   }
 
-  static getLabel(style_class) {
+  static getLabel(style_class, text) {
     return new St.Label({
       style_class: style_class,
+      text: text,
     });
   }
 }
